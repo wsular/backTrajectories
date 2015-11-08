@@ -19,17 +19,23 @@ class HYSPLIT4:
         Example usage #2:
             # Calculate a back trajectory for a given date.
             import hysplit
-            hy = hysplit.HYSPLIT4('121218','121220')
+            hy = hysplit.HYSPLIT4('121218','121220','Summit')
             hy.runBackTrajectory(72.83, -38.46, [50, 500, 1000, 3000])  # Summit Station at 50 m, 500 m, 1000 m, and 3000 m.
             hy.plotBackTrajectory()
 
     """
-    def __init__(self, beginningDate, endingDate):
+    def __init__(self, beginningDate, endingDate, descriptor='backTrajectory'):
         """INITIAL: Initializes the HYSPLIT processing object with the
                     desired dates to process.
-                    
+
+            Inputs:
+                beginningDate   - 'yymmdd' of beginning date to create back trajectories for.
+                endingDate      - 'yymmdd' of ending date to create back trajectories for.
+                descriptor      - text that describes back trajectories; used for filenames.
+
                     Written by Von P. Walden
                                  1 Nov 2014
+                    Updated on   8 Nov 2015
         """
         import sys
         from socket import gethostname
@@ -41,6 +47,7 @@ class HYSPLIT4:
 #       endingDate    = datetime.strptime(sys.argv[2],'%y%m%d')
         self.beginningDate = datetime.strptime(beginningDate,'%y%m%d')
         self.endingDate    = datetime.strptime(endingDate,   '%y%m%d')
+        self.descriptor    = descriptor
         self.deltaHours    = timedelta(hours=6)
         self.deltaMonths   = relativedelta(months=1)
         if (self.beginningDate > self.endingDate):
@@ -148,7 +155,7 @@ class HYSPLIT4:
             f.write(self.directory['data']+'\n')
             f.write('RP'+month3+'.gbl\n')
             f.write(self.directory['traj']+'\n')
-            f.write('Summit'+date.strftime('%Y%m%d%H')+'.trj\n')
+            f.write(self.descriptor+date.strftime('%Y%m%d%H')+'.trj\n')
             f.close()
             
             if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
@@ -177,10 +184,10 @@ class HYSPLIT4:
         while (date <= self.endingDate):
             # Define a unique date string for the trajectory.
             dstr   = date.strftime('%Y%m%d%H')
-            print('Creating plot for: Summit'+dstr+'.trj')
+            print('Creating plot for: '+self.descriptor+dstr+'.trj')
             
             # Read in the trajectory data file.
-            backtraj = np.loadtxt(self.directory['traj']+'Summit'+dstr+'.trj',skiprows=9)
+            backtraj = np.loadtxt(self.directory['traj']+self.descriptor+dstr+'.trj',skiprows=9)
             
             # Store each altitude in a separate array.
             dn1  = []
@@ -251,9 +258,9 @@ class HYSPLIT4:
             plt.text(x3[-1],y3[-1],'3000 meters',color='r')
             cb=plt.colorbar(shrink=0.7)
             cb.set_label('Altitude (km)')
-            plt.title('Back Trajectories from Summit, Greenland: '+dstr)
+            plt.title('Back Trajectories for '+self.descriptor+': '+dstr)
             
-            plt.savefig(self.directory['plot']+'Summit'+dstr+'.png')
+            plt.savefig(self.directory['plot']+self.descriptor+dstr+'.png')
             plt.close('all')
             
             date+=self.deltaHours
