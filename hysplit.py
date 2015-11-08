@@ -60,16 +60,16 @@ class HYSPLIT4:
             # For aeolus.wsu.edu  (Linux)
             self.directory = {'data':  '/data/vonw/hysplit4/reanalysis/',
                               'traj':  '/data/vonw/hysplit4/backTrajectories/',
-                              'code':  '/home/vonw/work/projects/icecaps/python/hysplit4/',
+                              'code':  '/home/vonw/work/software/backtrajectories/',
                               'plot':  '/data/vonw/hysplit4/backTrajectories/plots/'}
         elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
             # For sila.cee.wsu.edu  (iMac)
             self.directory = {'data':  '/Users/vonw/data/hysplit4/reanalysis/',
                               'traj':  '/Users/vonw/data/hysplit4/backTrajectories/',
-                              'code':  '/Users/vonw/software/ICECAPS/backTrajectories/',
+                              'code':  '/Users/vonw/software/backTrajectories/',
                               'plot':  '/Users/vonw/data/hysplit4/backTrajectories/plots/'}
         else:
-            print('Your local computer is unrecognized by hysplit.HYSPLIT4.  Talk to Von!')
+            print('Whoa, Partner... Your local computer is unrecognized by hysplit.HYSPLIT4.  Talk to Von!')
             sys.exit()
         
         return
