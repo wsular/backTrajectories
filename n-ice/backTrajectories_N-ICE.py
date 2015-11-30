@@ -12,7 +12,7 @@ time  = np.array([datetime.fromtimestamp(t,tz=pytz.UTC) for t in utime])
 
 stime = np.array([datetime(2000+int(f.strip()[-10:-8]),int(f.strip()[-8:-6]),int(f.strip()[-6:-4]),int(f.strip()[-2:]),0,0,0,pytz.UTC) for f in open('N-ICEsondeList.dat')])
 
-for t in stime[:10]:
+for t in stime:
 	ind = np.min(np.where(t<=time))
 	print(t,lat[ind],lon[ind])
 
