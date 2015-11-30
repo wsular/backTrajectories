@@ -16,6 +16,6 @@ for t in stime[:10]:
 	ind = np.min(np.where(t<=time))
 	print(t,lat[ind],lon[ind])
 
-	hy = hysplit.HYSPLIT4(t,24*7,lat[ind],lon[ind],[0,22,50,100],'N-ICE_nearSfc_')
+	hy = hysplit.HYSPLIT4([t],24*7,lat[ind],lon[ind],[0,22,50,100],'N-ICE_nearSfc_')
 	hy.runBackTrajectory()
 	hy.plotBackTrajectory()
