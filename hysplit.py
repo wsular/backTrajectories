@@ -185,6 +185,8 @@ class HYSPLIT4:
         from mpl_toolkits.basemap import Basemap
         import numpy as np
         import matplotlib.pyplot as plt
+        # Set the matplotlib backend to 'agg' to avoid errors with X-windows.
+        plt.switch_backend('agg')
         
         for date in self.dates:
             # Define a unique date string for the trajectory.
