@@ -53,7 +53,6 @@ class HYSPLIT4:
         """
         import sys
         from socket import gethostname
-        from datetime import datetime
         from dateutil.relativedelta import relativedelta
         
         # Specify the dates to process.
@@ -99,7 +98,7 @@ class HYSPLIT4:
         os.chdir(self.directory['data'])
         CDC = 'ftp://arlftp.arlhq.noaa.gov/pub/archives/reanalysis/'
         
-        for date in dates:
+        for date in self.dates:
             f = 'RP'+date.strftime('%Y%m')+'.gbl'
             print('Retrieving NCEP/NCAR reanalyses data: '+f)
             call(['wget', CDC+f])
@@ -125,7 +124,7 @@ class HYSPLIT4:
         # Navigate to the "trajectory" directory.
         os.chdir(self.directory['traj'])
         
-        for date in dates:
+        for date in self.dates:
             # Define a unique date string for the trajectory.
             dstr   = date.strftime('%Y%m%d%H')
             
@@ -151,10 +150,10 @@ class HYSPLIT4:
             # Create the CONTROL input file for HYSPLIT4
             f = open(self.directory['traj']+'CONTROL.'+dstr,'w')
             f.write(date.strftime('%y %m %d %H %M')+'\n')
-            f.write('%d\n' % len(alt))
-            for altitude in altitudes:
-                f.write('%9f %10f %d\n' % (latitude, longitude, altitude))
-            f.write(str(int(-length))+'\n')
+            f.write('%d\n' % len(self.altitudes))
+            for altitude in self.altitudes:
+                f.write('%9f %10f %d\n' % (self.latitude, self.longitude, altitude))
+            f.write(str(int(-self.length))+'\n')
             f.write('0	\n')
             f.write('13000\n')
             f.write('3\n')
@@ -183,12 +182,11 @@ class HYSPLIT4:
                     Written by  Von P. Walden
                                  1 Nov 2014
         """
-        from datetime import datetime
         from mpl_toolkits.basemap import Basemap
         import numpy as np
         import matplotlib.pyplot as plt
         
-        for date in dates:
+        for date in self.dates:
             # Define a unique date string for the trajectory.
             dstr   = date.strftime('%Y%m%d%H')
             print('Creating plot for: '+self.descriptor+dstr+'.trj')
@@ -215,7 +213,7 @@ class HYSPLIT4:
 
                 x, y = m(lon,lat)
                 m.scatter(x, y, c=alt/1000., linewidths=0, vmin=0., vmax=8., s=20)
-                plt.text(x[-1],y[-1],str(altitudes[ind])+' meters',color='r')
+                plt.text(x[-1],y[-1],str(self.altitudes[ind])+' meters',color='r')
             
             cb=plt.colorbar(shrink=0.7)
             cb.set_label('Altitude (km)')
