@@ -53,7 +53,7 @@ class HYSPLIT4:
         """
         import sys
         from socket import gethostname
-        from datetime import datetime
+        from datetime import datetime, timedelta
         from dateutil.relativedelta import relativedelta
         
         # Specify the dates to process.
