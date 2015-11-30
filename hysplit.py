@@ -53,7 +53,7 @@ class HYSPLIT4:
         """
         import sys
         from socket import gethostname
-        from datetime import datetime, timedelta
+        from datetime import datetime
         from dateutil.relativedelta import relativedelta
         
         # Specify the dates to process.
@@ -63,7 +63,7 @@ class HYSPLIT4:
         self.longitude     = longitude
         self.altitudes     = altitudes
         self.descriptor    = descriptor
-        self.deltaMonths   = timedelta(months=1)
+        self.deltaMonths   = relativedelta(months=1)
         
         # Set up the necessary directories.
         self.hostname = gethostname()
