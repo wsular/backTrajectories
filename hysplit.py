@@ -37,7 +37,7 @@ class HYSPLIT4:
                     desired dates to process.
 
             Inputs:
-                dates      - list of datetime objects to create back trajectories for.
+                dates      - list of datetime objects to create back trajectories for; MUST BE A LIST!!
                 length     - length of back trajectory in hours.
                 latitude   - latitude of the start position for back trajectory.
                 longitude  - longitude of the start position for back trajectory.
