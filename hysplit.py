@@ -13,46 +13,57 @@ class HYSPLIT4:
         Example usage #1:
             # Retrieve reanalysis data from NOAA for the ICECAPS time period.
             import hysplit
-            hy = hysplit.HYSPLIT4('100501','140601')
+            from datetime import datetime
+            dates = [datetime(2010,5,1), datetime(2014,6,1)]
+            hy = hysplit.HYSPLIT4(dates)
             hy.retrieveReanalysisDataFromNOAA()
             
         Example usage #2:
             # Calculate a back trajectory for a given date.
             import hysplit
-            hy = hysplit.HYSPLIT4('121218','121220','Summit')
-            hy.runBackTrajectory(72.83, -38.46, [50, 500, 1000, 3000])  # Summit Station at 50 m, 500 m, 1000 m, and 3000 m.
+            from datetime import datetime
+            dates  = [datetime(2015,1,1,0,0), datetime(2015,1,1,6,0), datetime(2015,1,1,12,0), datetime(2015,1,1,18,0)]
+            length = 336
+            lat    = +72.83
+            lon    = -38.46
+            alts   = [50, 500, 1000, 3000]
+            hy = hysplit.HYSPLIT4(dates,length,lat,lon,alts,'Summit')
+            hy.runBackTrajectory()  # Summit Station at 50 m, 500 m, 1000 m, and 3000 m.
             hy.plotBackTrajectory()
 
     """
-    def __init__(self, beginningDate, endingDate, descriptor='backTrajectory'):
+    def __init__(self, dates, length = 48, latitude=0., longitude=0., altitudes=0., descriptor='backTrajectory'):
         """INITIAL: Initializes the HYSPLIT processing object with the
                     desired dates to process.
 
             Inputs:
-                beginningDate   - 'yymmdd' of beginning date to create back trajectories for.
-                endingDate      - 'yymmdd' of ending date to create back trajectories for.
-                descriptor      - text that describes back trajectories; used for filenames.
+                dates      - list of datetime objects to create back trajectories for.
+                length     - length of back trajectory in hours.
+                latitude   - latitude of the start position for back trajectory.
+                longitude  - longitude of the start position for back trajectory.
+                altitude   - series of altitudes to start back trajectories from.
+                descriptor - text that describes back trajectories; used for filenames.
 
                     Written by Von P. Walden
                                  1 Nov 2014
                     Updated on   8 Nov 2015
+                                20 Nov 2015 - Changed the way dates are inputed; list of
+                                                datetime objects instead of beginning and ending.
+                                29 Nov 2015 - Can now input latitude, longitude and altitudes.
         """
         import sys
         from socket import gethostname
-        from datetime import datetime, timedelta
+        from datetime import datetime
         from dateutil.relativedelta import relativedelta
         
-        # Specify the beginning and ending dates to process.
-#        beginningDate = datetime.strptime(sys.argv[1],'%y%m%d')
-#       endingDate    = datetime.strptime(sys.argv[2],'%y%m%d')
-        self.beginningDate = datetime.strptime(beginningDate,'%y%m%d')
-        self.endingDate    = datetime.strptime(endingDate,   '%y%m%d')
+        # Specify the dates to process.
+        self.dates         = dates
+        self.length        = length
+        self.latitude      = latitude
+        self.longitude     = longitude
+        self.altitudes     = altitudes
         self.descriptor    = descriptor
-        self.deltaHours    = timedelta(hours=6)
-        self.deltaMonths   = relativedelta(months=1)
-        if (self.beginningDate > self.endingDate):
-            print('Beginning date is greater than the ending date.')
-            sys.exit()
+        self.deltaMonths   = timedelta(months=1)
         
         # Set up the necessary directories.
         self.hostname = gethostname()
@@ -88,25 +99,25 @@ class HYSPLIT4:
         os.chdir(self.directory['data'])
         CDC = 'ftp://arlftp.arlhq.noaa.gov/pub/archives/reanalysis/'
         
-        date  = self.beginningDate 
-        while (date <= self.endingDate):
+        for date in dates:
             f = 'RP'+date.strftime('%Y%m')+'.gbl'
             print('Retrieving NCEP/NCAR reanalyses data: '+f)
             call(['wget', CDC+f])
-            
-            date+=self.deltaMonths
         
         return
     
-    def runBackTrajectory(self, latitutde, longitude, altitudes):
-        """Creates HYSPLIT4 input file based on (lat,lon) and altitude, 
-            then runs the back trajectory.  Note that "altitudes" can be a list
-            of altitudes for running multiple altitudes for a given location.
+    def runBackTrajectory(self):
+        """Creates HYSPLIT4 input file based on the __init__ function.
                     
                     Written by  Von P. Walden
                                  1 Nov 2014
                     Updated     29 Sep 2014 - Added ability to specify
                                                 lat, lon and alt.
+                                20 Nov 2015 - Added capability to specify the 
+                                                number of hours to calculate the
+                                                back trajectory for.
+                                29 Nov 2015 - Cleaned things up by putting all
+                                                initializations into __init__.
         """
         import os
         from subprocess import call
@@ -114,8 +125,7 @@ class HYSPLIT4:
         # Navigate to the "trajectory" directory.
         os.chdir(self.directory['traj'])
         
-        date = self.beginningDate
-        while (date <= self.endingDate):
+        for date in dates:
             # Define a unique date string for the trajectory.
             dstr   = date.strftime('%Y%m%d%H')
             
@@ -140,11 +150,11 @@ class HYSPLIT4:
             
             # Create the CONTROL input file for HYSPLIT4
             f = open(self.directory['traj']+'CONTROL.'+dstr,'w')
-            f.write(date.strftime('%y %m %d %H')+'\n')
+            f.write(date.strftime('%y %m %d %H %M')+'\n')
             f.write('%d\n' % len(alt))
             for altitude in altitudes:
-                f.write('%9f %10f %d\n' % (latitude, longtitude, altitude))
-            f.write('-336\n')
+                f.write('%9f %10f %d\n' % (latitude, longitude, altitude))
+            f.write(str(int(-length))+'\n')
             f.write('0	\n')
             f.write('13000\n')
             f.write('3\n')
@@ -164,13 +174,11 @@ class HYSPLIT4:
             elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
                 # For sila.cee.wsu.edu  (iMac)
                 call(['/Applications/Hysplit4/exec/hyts_std', dstr])
-            
-            date+=self.deltaHours
         
         return
     
     def plotBackTrajectory(self):
-        """Generate a plot of HYSPLIT4 backtrajectories.
+        """Generate a plot of HYSPLIT4 back trajectories.
                     
                     Written by  Von P. Walden
                                  1 Nov 2014
@@ -180,57 +188,16 @@ class HYSPLIT4:
         import numpy as np
         import matplotlib.pyplot as plt
         
-        date = self.beginningDate
-        while (date <= self.endingDate):
+        for date in dates:
             # Define a unique date string for the trajectory.
             dstr   = date.strftime('%Y%m%d%H')
             print('Creating plot for: '+self.descriptor+dstr+'.trj')
             
             # Read in the trajectory data file.
-            backtraj = np.loadtxt(self.directory['traj']+self.descriptor+dstr+'.trj',skiprows=9)
-            
-            # Store each altitude in a separate array.
-            dn1  = []
-            lat1 = np.array([])
-            lon1 = np.array([]) 
-            alt1 = np.array([]) 
-            for line in backtraj[::3]:
-                dn1.append(datetime(int(line[2])+2000,int(line[3]),int(line[4]),int(line[5]),int(line[5]),int(line[7])))
-                lat1 = np.append(lat1, line[9])
-                lon1 = np.append(lon1, line[10])
-                alt1 = np.append(alt1, line[11])
-            
-            dn2  = []
-            lat2 = np.array([])
-            lon2 = np.array([]) 
-            alt2 = np.array([]) 
-            for line in backtraj[1::3]:
-                dn2.append(datetime(int(line[2])+2000,int(line[3]),int(line[4]),int(line[5]),int(line[5]),int(line[7])))
-                lat2 = np.append(lat2, line[9])
-                lon2 = np.append(lon2, line[10])
-                alt2 = np.append(alt2, line[11])
-            
-            dn3  = []
-            lat3 = np.array([])
-            lon3 = np.array([]) 
-            alt3 = np.array([]) 
-            for line in backtraj[2::3]:
-                dn3.append(datetime(int(line[2])+2000,int(line[3]),int(line[4]),int(line[5]),int(line[5]),int(line[7])))
-                lat3 = np.append(lat3, line[9])
-                lon3 = np.append(lon3, line[10])
-                alt3 = np.append(alt3, line[11])
-            
-            dn4  = []
-            lat4 = np.array([])
-            lon4 = np.array([]) 
-            alt4 = np.array([]) 
-            for line in backtraj[3::3]:
-                dn4.append(datetime(int(line[2])+2000,int(line[3]),int(line[4]),int(line[5]),int(line[5]),int(line[7])))
-                lat4 = np.append(lat4, line[9])
-                lon4 = np.append(lon4, line[10])
-                alt4 = np.append(alt4, line[11])
-            
-            # Create a nifty map.
+            numalts  = len(self.altitudes)
+            backtraj = np.loadtxt(self.directory['traj']+self.descriptor+dstr+'.trj',skiprows=6+numalts)
+
+            # Create the back trajectory plot.
             plt.figure()
             m = Basemap(resolution='l',projection='ortho',lat_0=90.,lon_0=0.)
             m.drawmapboundary()
@@ -240,29 +207,21 @@ class HYSPLIT4:
             m.drawparallels(parallels)
             m.drawmeridians(meridians)
             
-            x1, y1 = m(lon1,lat1)
-            m.scatter(x1, y1, c=alt1/1000., linewidths=0, vmin=0., vmax=8., s=20)
-            #m.plot(x1, y1, 'w', linewidth=0.7)
-            plt.text(x1[-1],y1[-1],'50 meters',color='r')
-            x2, y2 = m(lon2,lat2)
-            m.scatter(x2, y2, c=alt2/1000., linewidths=0, vmin=0., vmax=8., s=20)
-            #m.plot(x2, y2, 'w', linewidth=1)
-            plt.text(x2[-1],y2[-1],'500 meters',color='r')
-            x3, y3 = m(lon3,lat3)
-            m.scatter(x3, y3, c=alt3/1000., linewidths=0, vmin=0., vmax=8., s=20)
-            #m.plot(x3, y3, 'w', linewidth=1)
-            plt.text(x3[-1],y3[-1],'1000 meters',color='r')
-            x4, y4 = m(lon4,lat4)
-            m.scatter(x4, y4, c=alt4/1000., linewidths=0, vmin=0., vmax=8., s=20)
-            #m.plot(x3, y3, 'w', linewidth=1)
-            plt.text(x3[-1],y3[-1],'3000 meters',color='r')
+            # Plot each altitude.
+            for ind in range(numalts):
+                lat = backtraj[ind::numalts,9]
+                lon = backtraj[ind::numalts,10]
+                alt = backtraj[ind::numalts,11]
+
+                x, y = m(lon,lat)
+                m.scatter(x, y, c=alt/1000., linewidths=0, vmin=0., vmax=8., s=20)
+                plt.text(x[-1],y[-1],str(altitudes[ind])+' meters',color='r')
+            
             cb=plt.colorbar(shrink=0.7)
             cb.set_label('Altitude (km)')
             plt.title('Back Trajectories for '+self.descriptor+': '+dstr)
             
             plt.savefig(self.directory['plot']+self.descriptor+dstr+'.png')
             plt.close('all')
-            
-            date+=self.deltaHours
         
         return
