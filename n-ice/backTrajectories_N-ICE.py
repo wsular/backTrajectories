@@ -13,7 +13,7 @@ time  = np.array([datetime.fromtimestamp(t,tz=pytz.UTC) for t in utime])
 stime = np.array([datetime(2000+int(f.strip()[-10:-8]),int(f.strip()[-8:-6]),int(f.strip()[-6:-4]),int(f.strip()[-2:]),0,0,0,pytz.UTC) for f in open('N-ICEsondeList.dat')])
 
 for t in stime:
-	if( isnan(lat[ind]) | isnan(lon[ind]) ):
+	if( np.isnan(lat[ind]) | np.isnan(lon[ind]) ):
 		print(t,lat[ind],lon[ind])
 		print('Skipping this time due to lack of Lance nav data...')
 	else:
