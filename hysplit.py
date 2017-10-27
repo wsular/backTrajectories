@@ -105,6 +105,36 @@ class HYSPLIT4:
         
         return
     
+    def retrieveMostRecent7daysReanalysisDataFromNOAA(self):
+        """Automates the retrieval of reanalysis data from NOAAs
+            data archive. Currently one can only retrieve data from the
+            NCEP/NCAR reanalyses.
+
+        Usage:
+            import hysplit
+            dates = [datetime.datetime.now()]
+            hy    = hysplit.HYSPLIT4(dates)
+            hy.retrieveMostRecent7daysReanalysisDataFromNOAA()
+
+        Output:
+            Stores reanalysis file in /Users/vonw/data/hysplit4/reanalysis/current7days
+                    
+                    Written by  Von P. Walden
+                                 1 Nov 2014
+        """
+        import os
+        from subprocess import call
+        
+        os.chdir(self.directory['data'])
+        CDC = 'ftp://arlftp.arlhq.noaa.gov/pub/archives/gdas1/'
+        
+        for date in self.dates:
+            f = 'current7days.t00z'
+            print('Retrieving GDAS reanalyses data: '+f)
+            call(['wget', CDC+f])
+        
+        return
+    
     def runBackTrajectory(self):
         """Creates HYSPLIT4 input file based on the __init__ function.
                     
@@ -223,5 +253,76 @@ class HYSPLIT4:
             
             plt.savefig(self.directory['plot']+self.descriptor+dstr+'.png')
             plt.close('all')
+        
+        return
+
+    def runBackTrajectorySpokane(self):
+        """Creates a special HYSPLIT4 input file for Spokane, WA. Will only run most recent 7 days.
+        
+        Usage:
+            # Calculate a back trajectory for a given date.
+            import hysplit
+            from datetime import datetime
+            dates  = [datetime.now().date()]    # Note that is a DATE not a TIME.
+            hy     = hysplit.HYSPLIT4(dates)
+            hy.retrieveMostRecent7daysReanalysisDataFromNOAA()
+            length = 24                   # 24-hour back trajectory
+            lat    = +47.6588
+            lon    = -117.4260
+            alts   = [50]
+            hy = hysplit.HYSPLIT4(dates,length,lat,lon,alts,'Spokane')
+            hy.runBackTrajectorySpokane()  # Spokane at 50.
+            hy.plotBackTrajectory()
+            
+                    Written by  Von P. Walden
+                                27 Apr 2017
+        """
+        import os
+        from subprocess import call
+        
+        # Navigate to the "trajectory" directory.
+        os.chdir(self.directory['traj'])
+        
+        # Define a unique date string for the trajectory.
+        date   = self.dates[0]
+        dstr   = date.strftime('%Y%m%d%H')
+            
+            
+        # Create the SETUP input file for HYSPLIT4
+        f = open(self.directory['traj']+'SETUP.'+dstr,'w')
+        f.write('&SETUP\n')
+        f.write('KMSL=0,\n')
+        f.write('tm_tpot=1,\n')
+        f.write('tm_tamb=1,\n')
+        f.write('tm_rain=1,\n')
+        f.write('tm_mixd=1,\n')
+        f.write('tm_relh=1,\n')
+        f.write('tm_terr=1,\n')
+        f.write('tm_dswf=1,\n')
+        f.write('/ \n')
+        f.close()
+        
+        # Create the CONTROL input file for HYSPLIT4
+        f = open(self.directory['traj']+'CONTROL.'+dstr,'w')
+        f.write(date.strftime('%y %m %d %H %M')+'\n')
+        f.write('%d\n' % len(self.altitudes))
+        for altitude in self.altitudes:
+            f.write('%9f %10f %d\n' % (self.latitude, self.longitude, altitude))
+        f.write(str(int(-self.length))+'\n')
+        f.write('0  \n')
+        f.write('13000\n')
+        f.write('1\n')
+        f.write(self.directory['data']+'\n')
+        f.write('current7days.t00z \n')
+        f.write(self.directory['traj']+'\n')
+        f.write(self.descriptor+date.strftime('%Y%m%d%H')+'.trj\n')
+        f.close()
+        
+        if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
+            # For aeolus.wsu.edu  (Linux)
+            call(['/home/vonw/hysplit4/exec/hyts_std', dstr])
+        elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
+            # For sila.cee.wsu.edu  (iMac)
+            call(['/Applications/Hysplit4/exec/hyts_std', dstr])
         
         return
