@@ -1,36 +1,34 @@
 """
-General Python class for creating HYSPLIT4 back trajectories.
+General Python class for creating HYSPLIT back trajectories.
 Created on Sat Nov  1 21:11:10 2014
 
 @author: Von P. Walden
          Washington State University
          Laboratory for Atmospheric Research
 """
-class HYSPLIT4:
+class HYSPLIT:
     """This class defines attributes and methods for calculating back trajectories
-    		using NOAA's HYSPLIT4 model.
+    		using NOAA's HYSPLIT model.
         
         Example usage #1:
             # Retrieve reanalysis data from NOAA for the ICECAPS time period.
             import hysplit
-            from datetime import datetime
-            dates = [datetime(2010,5,1), datetime(2014,6,1)]
-            hy = hysplit.HYSPLIT4(dates)
+            import pandas as pd
+            dates = pd.date_range('2019-12-01','2020-03-01', freq='1M')   # Dec 2019, Jan 2020 and Feb 2020
+            hy = hysplit.HYSPLIT(dates)
             hy.retrieveReanalysisDataFromNOAA()
             
         Example usage #2:
             # Calculate a back trajectory for a given date.
             import hysplit
-            from datetime import datetime
-            dates  = [datetime(2015,1,1,0,0), datetime(2015,1,1,6,0), datetime(2015,1,1,12,0), datetime(2015,1,1,18,0)]
-            length = 336
-            lat    = +72.83
-            lon    = -38.46
-            alts   = [50, 500, 1000, 3000]
-            hy = hysplit.HYSPLIT4(dates,length,lat,lon,alts,'Summit')
-            hy.runBackTrajectory()  # Summit Station at 50 m, 500 m, 1000 m, and 3000 m.
-            hy.plotBackTrajectory()
-
+            import pandas as pd
+            dates  = pd.date_range('2020-01-09', '2020-01-17 18:00', freq='3H')   # Every 3 hours for 9 days in Jan 2020  
+            length = 120
+            lat    = +46.7
+            lon    = -117.2
+            alts   = [500, 1000, 1500]
+            hy = hysplit.HYSPLIT(dates,length,lat,lon,alts,'Pullman')
+            hy.runBackTrajectory()  # Pullman, WA at 500 m, 1000 m and 1500 m.
     """
     def __init__(self, dates, length = 48, latitude=0., longitude=0., altitudes=0., descriptor='backTrajectory'):
         """INITIAL: Initializes the HYSPLIT processing object with the
@@ -70,16 +68,16 @@ class HYSPLIT4:
             # For aeolus.wsu.edu  (Linux)
             self.directory = {'data':  '/data/vonw/hysplit4/reanalysis/',
                               'traj':  '/data/vonw/hysplit4/backTrajectories/',
-                              'code':  '/home/vonw/work/software/backtrajectories/',
+                              'code':  '/home/vonw/hysplit4/exec/',
                               'plot':  '/data/vonw/hysplit4/backTrajectories/plots/'}
         elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
             # For sila.cee.wsu.edu  (iMac)
-            self.directory = {'data':  '/Users/vonw/data/hysplit4/reanalysis/',
-                              'traj':  '/Users/vonw/data/hysplit4/backTrajectories/',
-                              'code':  '/Users/vonw/software/backTrajectories/',
-                              'plot':  '/Users/vonw/data/hysplit4/backTrajectories/plots/'}
+            self.directory = {'data':  '/Users/vonw/data/hysplit/reanalysis/',
+                              'traj':  '/Users/vonw/data/hysplit/backTrajectories/',
+                              'code':  '/Users/vonw/hysplit/exec/',
+                              'plot':  '/Users/vonw/data/hysplit/backTrajectories/plots/'}
         else:
-            print('Whoa, Partner... Your local computer is unrecognized by hysplit.HYSPLIT4.  Talk to Von!')
+            print('Whoa, Partner... Your local computer is unrecognized by hysplit.HYSPLIT.  Talk to Von!')
             sys.exit()
         
         return
@@ -96,7 +94,7 @@ class HYSPLIT4:
         from subprocess import call
         
         os.chdir(self.directory['data'])
-        CDC = 'ftp://arlftp.arlhq.noaa.gov/pub/archives/reanalysis/'
+        CDC = 'ftp://arlftp.arlhq.noaa.gov/archives/reanalysis/'
         
         for date in self.dates:
             f = 'RP'+date.strftime('%Y%m')+'.gbl'
@@ -113,11 +111,8 @@ class HYSPLIT4:
         Usage:
             import hysplit
             dates = [datetime.datetime.now()]
-            hy    = hysplit.HYSPLIT4(dates)
+            hy    = hysplit.HYSPLIT(dates)
             hy.retrieveMostRecent7daysReanalysisDataFromNOAA()
-
-        Output:
-            Stores reanalysis file in /Users/vonw/data/hysplit4/reanalysis/current7days
                     
                     Written by  Von P. Walden
                                  1 Nov 2014
@@ -136,7 +131,8 @@ class HYSPLIT4:
         return
     
     def runBackTrajectory(self):
-        """Creates HYSPLIT4 input file based on the __init__ function.
+        """Creates HYSPLIT input file based on the __init__ function, then
+            runs the specified backtrajectory.
                     
                     Written by  Von P. Walden
                                  1 Nov 2014
@@ -163,7 +159,7 @@ class HYSPLIT4:
             month2 = (date-self.deltaMonths).strftime('%Y%m')
             month3 = (date+self.deltaMonths).strftime('%Y%m')
             
-            # Create the SETUP input file for HYSPLIT4
+            # Create the SETUP input file for HYSPLIT
             f = open(self.directory['traj']+'SETUP.'+dstr,'w')
             f.write('&SETUP\n')
             f.write('KMSL=0,\n')
@@ -177,7 +173,7 @@ class HYSPLIT4:
             f.write('/ \n')
             f.close()
             
-            # Create the CONTROL input file for HYSPLIT4
+            # Create the CONTROL input file for HYSPLIT
             f = open(self.directory['traj']+'CONTROL.'+dstr,'w')
             f.write(date.strftime('%y %m %d %H %M')+'\n')
             f.write('%d\n' % len(self.altitudes))
@@ -199,130 +195,62 @@ class HYSPLIT4:
             
             if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
                 # For aeolus.wsu.edu  (Linux)
-                call(['/home/vonw/hysplit4/exec/hyts_std', dstr])
+                call([self.directory['code']+'hyts_std', dstr])
             elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
                 # For sila.cee.wsu.edu  (iMac)
-                call(['/Applications/Hysplit4/exec/hyts_std', dstr])
+                call([self.directory['code']+'hyts_std', dstr])
         
         return
     
-    def plotBackTrajectory(self):
-        """Generate a plot of HYSPLIT4 back trajectories.
-                    
+    def plotBackTrajectory(self, colorScaleVariable='altitude'):
+        """Generate a plot of HYSPLIT back trajectories.        
                     Written by  Von P. Walden
                                  1 Nov 2014
+                    Updated:    11 Aug 2020 - Now uses cartopy and geopandas instead of basemap.
         """
-        from mpl_toolkits.basemap import Basemap
-        import numpy as np
-        import matplotlib.pyplot as plt
-        # Set the matplotlib backend to 'agg' to avoid errors with X-windows.
-        plt.switch_backend('agg')
+        import pandas as pd
+        import hvplot
+        import hvplot.pandas  # noqa
         
         for date in self.dates:
             # Define a unique date string for the trajectory.
             dstr   = date.strftime('%Y%m%d%H')
-            print('Creating plot for: '+self.descriptor+dstr+'.trj')
+            print('Creating HTML plot for: '+self.descriptor+dstr+'.trj')
             
             # Read in the trajectory data file.
             numalts  = len(self.altitudes)
-            backtraj = np.loadtxt(self.directory['traj']+self.descriptor+dstr+'.trj',skiprows=6+numalts)
-
-            # Create the back trajectory plot.
-            plt.figure()
-            m = Basemap(resolution='l',projection='ortho',lat_0=90.,lon_0=0.)
-            m.drawmapboundary()
-            m.drawcoastlines()
-            parallels = np.arange(-80.,90,10.)
-            meridians = np.arange(0.,360.,10.)
-            m.drawparallels(parallels)
-            m.drawmeridians(meridians)
+            df = pd.read_csv(self.directory['traj']+self.descriptor+dstr+'.trj', 
+                             skiprows=6+numalts, 
+                             delimiter=r"\s+", 
+                             names=['trajectory', 
+                                    'run', 
+                                    'year', 
+                                    'month', 
+                                    'day', 
+                                    'hour', 
+                                    'minute', 
+                                    'seconds', 
+                                    'time', 
+                                    'latitude', 
+                                    'longitude', 
+                                    'altitude', 
+                                    'pressure', 
+                                    'potential temperature', 
+                                    'air temperature', 
+                                    'rainfall', 
+                                    'mix depth', 
+                                    'relative humidity', 
+                                    'terrain above msl', 
+                                    'solar flux'])
             
-            # Plot each altitude.
-            for ind in range(numalts):
-                lat = backtraj[ind::numalts,9]
-                lon = backtraj[ind::numalts,10]
-                alt = backtraj[ind::numalts,11]
-
-                x, y = m(lon,lat)
-                m.scatter(x, y, c=alt/1000., linewidths=0, vmin=0., vmax=8., s=20)
-                plt.text(x[-1],y[-1],str(self.altitudes[ind])+' meters',color='r')
+            plot = df.hvplot.points('longitude', 'latitude', 
+                             geo=True, 
+                             c=df[colorScaleVariable], 
+                             clabel=colorScaleVariable,
+                             cmap='viridis', 
+                             tiles='CartoEco', 
+                             title='Back Trajectories for ' + self.descriptor + ' (' + colorScaleVariable + ')' + ': ' + dstr)
             
-            cb=plt.colorbar(shrink=0.7)
-            cb.set_label('Altitude (km)')
-            plt.title('Back Trajectories for '+self.descriptor+': '+dstr)
-            
-            plt.savefig(self.directory['plot']+self.descriptor+dstr+'.png')
-            plt.close('all')
-        
-        return
-
-    def runBackTrajectorySpokane(self):
-        """Creates a special HYSPLIT4 input file for Spokane, WA. Will only run most recent 7 days.
-        
-        Usage:
-            # Calculate a back trajectory for a given date.
-            import hysplit
-            from datetime import datetime
-            dates  = [datetime.now().date()]    # Note that is a DATE not a TIME.
-            hy     = hysplit.HYSPLIT4(dates)
-            hy.retrieveMostRecent7daysReanalysisDataFromNOAA()
-            length = 24                   # 24-hour back trajectory
-            lat    = +47.6588
-            lon    = -117.4260
-            alts   = [50]
-            hy = hysplit.HYSPLIT4(dates,length,lat,lon,alts,'Spokane')
-            hy.runBackTrajectorySpokane()  # Spokane at 50.
-            hy.plotBackTrajectory()
-            
-                    Written by  Von P. Walden
-                                27 Apr 2017
-        """
-        import os
-        from subprocess import call
-        
-        # Navigate to the "trajectory" directory.
-        os.chdir(self.directory['traj'])
-        
-        # Define a unique date string for the trajectory.
-        date   = self.dates[0]
-        dstr   = date.strftime('%Y%m%d%H')
-            
-            
-        # Create the SETUP input file for HYSPLIT4
-        f = open(self.directory['traj']+'SETUP.'+dstr,'w')
-        f.write('&SETUP\n')
-        f.write('KMSL=0,\n')
-        f.write('tm_tpot=1,\n')
-        f.write('tm_tamb=1,\n')
-        f.write('tm_rain=1,\n')
-        f.write('tm_mixd=1,\n')
-        f.write('tm_relh=1,\n')
-        f.write('tm_terr=1,\n')
-        f.write('tm_dswf=1,\n')
-        f.write('/ \n')
-        f.close()
-        
-        # Create the CONTROL input file for HYSPLIT4
-        f = open(self.directory['traj']+'CONTROL.'+dstr,'w')
-        f.write(date.strftime('%y %m %d %H %M')+'\n')
-        f.write('%d\n' % len(self.altitudes))
-        for altitude in self.altitudes:
-            f.write('%9f %10f %d\n' % (self.latitude, self.longitude, altitude))
-        f.write(str(int(-self.length))+'\n')
-        f.write('0  \n')
-        f.write('13000\n')
-        f.write('1\n')
-        f.write(self.directory['data']+'\n')
-        f.write('current7days.t00z \n')
-        f.write(self.directory['traj']+'\n')
-        f.write(self.descriptor+date.strftime('%Y%m%d%H')+'.trj\n')
-        f.close()
-        
-        if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
-            # For aeolus.wsu.edu  (Linux)
-            call(['/home/vonw/hysplit4/exec/hyts_std', dstr])
-        elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
-            # For sila.cee.wsu.edu  (iMac)
-            call(['/Applications/Hysplit4/exec/hyts_std', dstr])
+            hvplot.save(plot, self.directory['plot'] + self.descriptor + '_' + colorScaleVariable + '_' + dstr + '.html')
         
         return
