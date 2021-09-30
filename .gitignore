@@ -1,4 +1,2 @@
 ASCDATA.CFG
-__pycache__/hysplit.cpython-35.pyc
-__pycache__/hysplit.cpython-36.pyc
-__pycache__/hysplit.cpython-37.pyc
+__pycache__/*
