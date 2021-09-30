@@ -71,7 +71,7 @@ class HYSPLIT:
                               'code':  '/home/vonw/hysplit4/exec/',
                               'plot':  '/data/vonw/hysplit4/backTrajectories/plots/'}
         elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
-            # For sila.cee.wsu.edu  (iMac)
+            # For sila.paccar.wsu.edu  (iMac)
             self.directory = {'data':  '/Users/vonw/data/hysplit/reanalysis/',
                               'traj':  '/Users/vonw/data/hysplit/backTrajectories/',
                               'code':  '/Users/vonw/hysplit/exec/',
