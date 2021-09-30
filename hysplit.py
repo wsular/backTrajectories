@@ -257,7 +257,7 @@ class HYSPLIT:
                              c=df[colorScaleVariable], 
                              clabel=colorScaleVariable,
                              cmap='viridis', 
-                             tiles='CartoEco', 
+                             tiles='StamenTerrain', 
                              title='Back Trajectories for ' + self.descriptor + ' (' + colorScaleVariable + ')' + ': ' + dstr)
             
             hvplot.save(plot, self.directory['plot'] + self.descriptor + '_' + colorScaleVariable + '_' + dstr + '.html')
