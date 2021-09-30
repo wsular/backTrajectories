@@ -65,7 +65,7 @@ class HYSPLIT:
         # Set up the necessary directories.
         self.hostname = gethostname()
         if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
-            # For aeolus.wsu.edu  (Linux)
+            # For aeolus.wsu.edu  (Linux cluster)
             self.directory = {'data':  '/data/vonw/hysplit4/reanalysis/',
                               'traj':  '/data/vonw/hysplit4/backTrajectories/',
                               'code':  '/home/vonw/hysplit4/exec/',
@@ -76,6 +76,12 @@ class HYSPLIT:
                               'traj':  '/Users/vonw/data/hysplit/backTrajectories/',
                               'code':  '/Users/vonw/hysplit/exec/',
                               'plot':  '/Users/vonw/data/hysplit/backTrajectories/plots/'}
+        elif self.hostname.rfind('gaia')>=0:
+            # For 134.121.21.45  (gaia - Linux workstation)
+            self.directory = {'data':  '/mnt/data/vonw/hysplit/reanalysis/',
+                              'traj':  '/mnt/data/vonw/hysplit/backTrajectories/',
+                              'code':  '/home/vonw/hysplit4/exec/',
+                              'plot':  '/mnt/data/vonw/hysplit/backTrajectories/plots/'}
         else:
             print('Whoa, Partner... Your local computer is unrecognized by hysplit.HYSPLIT.  Talk to Von!')
             sys.exit()
@@ -194,10 +200,13 @@ class HYSPLIT:
             f.close()
             
             if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
-                # For aeolus.wsu.edu  (Linux)
+                # For aeolus.wsu.edu  (Linux cluster)
                 call([self.directory['code']+'hyts_std', dstr])
             elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
-                # For sila.cee.wsu.edu  (iMac)
+                # For sila.paccar.wsu.edu (iMac) or nuia (Macbook Pro)
+                call([self.directory['code']+'hyts_std', dstr])
+            elif self.hostname.rfind('gaia')>=0:
+                # For 134.121.21.45 (gaia - Linux workstation)
                 call([self.directory['code']+'hyts_std', dstr])
         
         return
