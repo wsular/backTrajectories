@@ -66,10 +66,10 @@ class HYSPLIT:
         self.hostname = gethostname()
         if self.hostname.rfind('aeolus')>=0 or self.hostname.rfind('compute')>=0:
             # For aeolus.wsu.edu  (Linux cluster)
-            self.directory = {'data':  '/data/vonw/hysplit4/reanalysis/',
-                              'traj':  '/data/vonw/hysplit4/backTrajectories/',
+            self.directory = {'data':  '/data/lar/users/vonw/hysplit4/reanalysis/',
+                              'traj':  '/data/lar/users/vonw/hysplit4/backTrajectories/',
                               'code':  '/home/vonw/hysplit4/exec/',
-                              'plot':  '/data/vonw/hysplit4/backTrajectories/plots/'}
+                              'plot':  '/data/lar/users/vonw/hysplit4/backTrajectories/plots/'}
         elif self.hostname.rfind('sila')>=0 or self.hostname.rfind('nuia')>=0:
             # For sila.paccar.wsu.edu  (iMac)
             self.directory = {'data':  '/Users/vonw/data/hysplit/reanalysis/',
