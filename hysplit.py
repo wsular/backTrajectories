@@ -23,7 +23,7 @@ class HYSPLIT:
             import hysplit
             import pandas as pd
             dates  = pd.date_range('2020-01-09', '2020-01-17 18:00', freq='3H')   # Every 3 hours for 9 days in Jan 2020  
-            length = 120
+            length = 120      # in hours
             lat    = +46.7
             lon    = -117.2
             alts   = [500, 1000, 1500]
