@@ -76,12 +76,6 @@ class HYSPLIT:
                               'traj':  '/Users/vonw/data/hysplit/backTrajectories/',
                               'code':  '/Users/vonw/hysplit/exec/',
                               'plot':  '/Users/vonw/data/hysplit/backTrajectories/plots/'}
-        #elif self.hostname.rfind('gaia')>=0:
-            # For 134.121.21.45  (gaia - Linux workstation)
-        #    self.directory = {'data':  '/mnt/data/vonw/hysplit/reanalysis/',
-        #                      'traj':  '/mnt/data/vonw/hysplit/backTrajectories/',
-        #                      'code':  '/home/vonw/hysplit4/exec/',
-        #                      'plot':  '/mnt/data/vonw/hysplit/backTrajectories/plots/'}
         elif self.hostname.rfind('gaia')>=0:
             # For 134.121.21.204  (gaia - Linux workstation)
             self.directory = {'data':  '/home/anacarla/hysplit/data/reanalysis/',
@@ -159,6 +153,7 @@ class HYSPLIT:
         """
         import os
         from subprocess import call
+        from subprocess import run
         
         # Navigate to the "trajectory" directory.
         os.chdir(self.directory['traj'])
@@ -214,9 +209,13 @@ class HYSPLIT:
                 call([self.directory['code']+'hyts_std', dstr])
             elif self.hostname.rfind('gaia')>=0:
                 # For 134.121.21.204 (gaia - Linux workstation)
-                call([self.directory['container']],shell=True)
-                call([self.directory['code']+'hyts_std', dstr],shell=True)
-        
+                print("On Gaia")
+                print(dstr)
+                call('/home/anacarla/hysplit/traj/test_run.sh '+str(dstr), shell=True)
+                #call([self.directory['code']+'hyts_std', dstr],shell=True)
+            else:
+                print("Error for the loop")
+
         return
     
     def plotBackTrajectory(self, colorScaleVariable='altitude'):
